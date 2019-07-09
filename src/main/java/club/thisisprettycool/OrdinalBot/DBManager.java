@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 
 public class DBManager {
     Connection c = null;
@@ -16,9 +17,12 @@ public class DBManager {
             c = DriverManager.getConnection("jdbc:sqlite:OrdinalBot.db");
             stmt = c.createStatement();
             stmt.execute("CREATE TABLE IF NOT EXISTS Suggestions (UserID bigint(20), Suggestion varchar(2000), SuggestionMessage varchar(20))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS Settings (Prefix VARCHAR(5), ServerInfoChannel bigint(20), ServerInfoIP VARCHAR(20), SuggestChannel bigint(20), AdminRole bigint(20))");
+            stmt.execute("CREATE TABLE IF NOT EXISTS Settings (Prefix VARCHAR(5), ServerInfoChannel bigint(20), ServerInfoIP VARCHAR(20), SuggestChannel bigint(20), OptChannel bigint(20))");
             stmt.execute("CREATE TABLE IF NOT EXISTS Tags (UserID bigint(20), Tag varchar(50))");
             stmt.execute("CREATE TABLE IF NOT EXISTS Blacklisted (UserID bigint(20))");
+            stmt.execute("CREATE TABLE IF NOT EXISTS Roles (AdminRole bigint(20), EventRole bigint(20), GeneralRole bigint(20), DeveloperRole bigint(20), EventStaff bigint(20))");
+            stmt.execute("INSERT IGNORE INTO Settings (Prefix,ServerInfoChannel,ServerInfoIP,SuggestChannel,AdminRole) VALUES ('?',0,'null',0,0)");
+            stmt.execute("INSERT")
             System.out.println("Database connection complete");
         } catch (Exception e) {
             System.out.println("Something has gone wrong");
@@ -29,7 +33,7 @@ public class DBManager {
     public void createSuggestion(long userid, String suggestion, long channelid) {
         try {
             stmt = c.createStatement();
-            stmt.execute("INSERT INTO Suggestions ("+userid+","+suggestion+","+channelid+")");
+            stmt.execute("INSERT INTO Suggestions(UserID, Suggestion, SuggestionMessage) VALUES ("+userid+",'"+suggestion+"','"+channelid+"')");
         } catch (Exception e) {
             System.out.println("Something has gone wrong");
             e.printStackTrace();
@@ -136,6 +140,30 @@ public class DBManager {
             System.out.println("Something has gone wrong");
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public long getSuggestChannel() {
+        try {
+            stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Settings");
+            if(rs.next()) {
+                return rs.getLong("SuggestChannel");
+            }
+            return 0;
+        }catch (Exception e) {
+            System.out.println("Something has gone wrong");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public ResultSet runQuery(String statement) {
+        try {
+            stmt = c.createStatement();
+            return stmt.executeQuery(statement);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

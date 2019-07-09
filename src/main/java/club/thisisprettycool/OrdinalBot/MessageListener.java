@@ -2,6 +2,8 @@ package club.thisisprettycool.OrdinalBot;
 
 import club.thisisprettycool.OrdinalBot.Commands.Help;
 import club.thisisprettycool.OrdinalBot.Commands.Ping;
+import club.thisisprettycool.OrdinalBot.Commands.Query;
+import club.thisisprettycool.OrdinalBot.Commands.Suggest;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -33,8 +35,10 @@ public class MessageListener {
                 for(CommandCore command :commandList) {
                     if(commandStr.toLowerCase().contains(command.getCommandName().toLowerCase()) || command.isAlias(commandStr.toLowerCase())) {
                         if(command.isAdminOnly()) {
-                            if(!event.getAuthor().equals(event.getClient().getApplicationOwner()) || !event.getAuthor().getRolesForGuild(event.getGuild()).contains(event.getGuild().getRoleByID(Main.getDbManager().getAdminRole()))) {
-                                return;
+                            if(!event.getAuthor().getRolesForGuild(event.getGuild()).contains(event.getGuild().getRoleByID(Main.getDbManager().getAdminRole()))) {
+                                if(!event.getAuthor().equals(event.getClient().getApplicationOwner())) {
+                                    return;
+                                }
                             }
                         }
                         System.out.println(event.getAuthor().getName() +" ran command "+commandStr+"\nFull message: "+event.getMessage().getContent());
@@ -47,6 +51,8 @@ public class MessageListener {
 
     private void getCommands() {
         commandList.add(new Ping());
+        commandList.add(new Suggest());
+        commandList.add(new Query());
 
         commandList.add(new Help(commandList));
     }
