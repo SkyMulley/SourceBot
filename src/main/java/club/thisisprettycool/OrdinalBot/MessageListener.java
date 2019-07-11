@@ -1,33 +1,34 @@
 package club.thisisprettycool.OrdinalBot;
 
-import club.thisisprettycool.OrdinalBot.Commands.Help;
-import club.thisisprettycool.OrdinalBot.Commands.Ping;
-import club.thisisprettycool.OrdinalBot.Commands.Query;
-import club.thisisprettycool.OrdinalBot.Commands.Suggest;
+import club.thisisprettycool.OrdinalBot.Commands.*;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
-import sx.blah.discord.api.events.EventSubscriber;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import discord4j.core.DiscordClient;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MessageListener {
     private List<CommandCore> commandList = new ArrayList<>();
+    private DiscordClient cli;
 
-    public MessageListener() {
+    public MessageListener(DiscordClient cli) {
+        this.cli = cli;
         getCommands();
+        cli.getEventDispatcher().on(MessageCreateEvent.class).subscribe(event -> onMessageRecieved(event));
     }
 
-    @EventSubscriber
-    public void onMessageRecieved(MessageReceivedEvent event) {
-        if(!event.getChannel().isPrivate() || !event.getAuthor().isBot()) {
-            if(!Main.getDbManager().isBlacklisted(event.getAuthor().getLongID())) {
+    public void onMessageRecieved(MessageCreateEvent event) {
+        if(!event.getGuildId().isPresent() || !event.getMember().get().isBot()) {
+            if(!Main.getDbManager().isBlacklisted(event.getMember().get().getId().asLong())) {
                 String prefix = Main.getDbManager().getPrefix();
-                if(event.getMessage().getContent().startsWith("<@"+event.getClient().getOurUser().getLongID()+">")) {
-                    event.getChannel().sendMessage("Hey There!\nMy prefix is `"+prefix+"`, use `"+prefix+"`help for commands and their usages");
+                String content = event.getMessage().getContent().get();
+                if(content.equals("<@"+event.getClient().getSelf().block().getId()+">")) {
+                    event.getMessage().getChannel().block().createMessage("Hey There!\nMy prefix is `"+prefix+"`, use `"+prefix+"`help for commands and their usages");
                     return;
                 }
-                String[] argArray = event.getMessage().getContent().split(" ");
+                String[] argArray = content.split(" ");
                 if (argArray.length == 0 || !argArray[0].startsWith(prefix)) {
                     return;
                 }
@@ -35,14 +36,14 @@ public class MessageListener {
                 for(CommandCore command :commandList) {
                     if(commandStr.toLowerCase().contains(command.getCommandName().toLowerCase()) || command.isAlias(commandStr.toLowerCase())) {
                         if(command.isAdminOnly()) {
-                            if(!event.getAuthor().getRolesForGuild(event.getGuild()).contains(event.getGuild().getRoleByID(Main.getDbManager().getAdminRole()))) {
-                                if(!event.getAuthor().equals(event.getClient().getApplicationOwner())) {
+                            if(!event.getMember().get().getRoleIds().equals(Main.getDbManager().getAdminRole())) {
+                                if(!event.getMember().get().equals(event.getClient().getApplicationInfo().block().getOwner().block())) {
                                     return;
                                 }
                             }
                         }
-                        System.out.println(event.getAuthor().getName() +" ran command "+commandStr+"\nFull message: "+event.getMessage().getContent());
-                        command.executeCommand(event,argArray);
+                        System.out.println(event.getMember().get().getUsername() +" ran command "+commandStr+"\nFull message: "+event.getMessage().getContent());
+                        command.executeCommand(event,argArray,content);
                     }
                 }
             }
@@ -53,6 +54,7 @@ public class MessageListener {
         commandList.add(new Ping());
         commandList.add(new Suggest());
         commandList.add(new Query());
+        commandList.add(new Settings());
 
         commandList.add(new Help(commandList));
     }

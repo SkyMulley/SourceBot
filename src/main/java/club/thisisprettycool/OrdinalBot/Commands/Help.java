@@ -2,13 +2,16 @@ package club.thisisprettycool.OrdinalBot.Commands;
 
 import club.thisisprettycool.OrdinalBot.Main;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
-import com.vdurmont.emoji.EmojiManager;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.util.EmbedBuilder;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.Embed;
+import discord4j.core.spec.EmbedCreateSpec;
 
+import java.awt.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Help extends CommandCore {
+    private static String message = "";
     private List<CommandCore> GC;
     public Help(List<CommandCore> GC) {
         commandName = "Help";
@@ -17,47 +20,59 @@ public class Help extends CommandCore {
     }
 
     @Override
-    public boolean executeCommand(MessageReceivedEvent event, String[] argsArray) {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.withAuthorName("Help Menu");
-        builder.withAuthorIcon(event.getClient().getOurUser().getAvatarURL());
-        builder.withColor(255, 255, 255);
+    public boolean executeCommand(MessageCreateEvent event, String[] argsArray, String content) {
+        Consumer<EmbedCreateSpec> template = embed -> {
+            embed.setAuthor("Help Menu",event.getClient().getSelf().block().getAvatarUrl(),event.getClient().getSelf().block().getAvatarUrl());
+            embed.setColor(Color.WHITE);
+        };
         String prefix = Main.getDbManager().getPrefix();
         if(argsArray.length==2) {
             boolean found = false;
             for(CommandCore GG : GC) {
                 if (GG.getCommandName().equalsIgnoreCase(argsArray[1]) || GG.isAlias(argsArray[1])) {
                     if(GG.isHelpViewable()) {
-                        builder.withDescription("More help for the command `" + GG.getCommandName() + "`");
-                        builder.appendField("Help Message", GG.getHelpMessage(), false);
-                        builder.appendField("Usage", prefix+GG.getUsage(), false);
-                        String message = "`";
+                        template.andThen(embed -> {
+                                    embed.setDescription("More help for the command `" + GG.getCommandName() + "`");
+                                    embed.addField("Help Message", GG.getHelpMessage(), false);
+                                    embed.addField("Usage", prefix + GG.getUsage(), false);
+                        });
+                        message = "`";
                         if(GG.getAliases().size()!=0) {
                             for (String alias : GG.getAliases()) {
                                 message = message + alias + "\n";
                             }
                             message = message + "`";
-                            builder.appendField("Command Aliases", message, false);
+                            template.andThen(embed -> {
+                                embed.addField("Command Aliases", message, false);
+                            });
                         }
-                        event.getChannel().sendMessage(builder.build());
+                        event.getMessage().getChannel().block().createMessage(spec -> spec.setEmbed(template.andThen(embedspec ->{})));
                         return true;
                     } else {
-                        event.getChannel().sendMessage("You don't have permission to look at the advanced help for this command");
+                        event.getMessage().getChannel().block().createMessage("You don't have permission to look at the advanced help for this command");
                         return false;
                     }
                 }
             }
-            event.getChannel().sendMessage("No commands where found by that name. Please check your spelling and try again");
+            event.getMessage().getChannel().block().createMessage("No commands where found by that name. Please check your spelling and try again");
             return false;
         }else  {
-            String message = "";
+            message = "";
             for (CommandCore GG : GC) {
                 if (GG.isHelpViewable()) {
-                    message = message + "\n**" + GG.getCommandName() + " - **" + GG.getHelpMessage() + "\nUsage: " + prefix + GG.getUsage();
+                    if(GG.isAdminOnly()) {
+                        if(event.getMember().get().getRoleIds().equals(Main.getDbManager().getAdminRole()) || event.getMember().get().equals(event.getClient().getApplicationInfo().block().getOwner().block())) {
+                            message = message + "\n**" + GG.getCommandName() + " - **" + GG.getHelpMessage() + "\nUsage: " + prefix + GG.getUsage();
+                        }
+                    } else {
+                        message = message + "\n**" + GG.getCommandName() + " - **" + GG.getHelpMessage() + "\nUsage: " + prefix + GG.getUsage();
+                    }
                 }
             }
-            builder.appendField("Commands", message, false);
-            event.getChannel().sendMessage(builder.build());
+            template.andThen(embed -> {
+                embed.addField("Commands", message, false);
+            });
+            event.getMessage().getChannel().block().createMessage(spec -> spec.setEmbed(template.andThen(embedspec ->{})));
         }
         return true;
     }

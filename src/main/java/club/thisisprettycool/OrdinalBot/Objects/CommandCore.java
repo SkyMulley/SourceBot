@@ -1,9 +1,8 @@
 package club.thisisprettycool.OrdinalBot.Objects;
 
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.util.EmbedBuilder;
-import sx.blah.discord.util.RequestBuffer;
+import discord4j.core.event.domain.message.MessageCreateEvent;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,14 +30,14 @@ public class CommandCore {
         return false;
     }
 
-    public boolean executeCommand(MessageReceivedEvent event,String[] argArray) {return true;}
+    public boolean executeCommand(MessageCreateEvent event, String[] argArray, String content) {return true;}
 
-    public void argsNotFound(MessageReceivedEvent event) {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.withAuthorName("Whoops!");
-        builder.withDescription("You haven't supplied the right args in your request. Check with the help command if you are unsure of the usage of this command.");
-        builder.withColor(255,0,0);
-        builder.withAuthorName(event.getAuthor().getName());
-        RequestBuffer.request(() -> event.getChannel().sendMessage(builder.build()));
+    public void argsNotFound(MessageCreateEvent event) {
+        event.getMessage().getChannel().block().createMessage( s->
+                s.setEmbed(embed -> {
+                            embed.setAuthor("Whoops", event.getMember().get().getAvatarUrl(), event.getMember().get().getAvatarUrl());
+                            embed.setDescription("You haven't supplied the right args in your request. Check with the help command if you are unsure of the usage of this command.");
+                            embed.setColor(Color.RED);
+                        }));
     }
 }

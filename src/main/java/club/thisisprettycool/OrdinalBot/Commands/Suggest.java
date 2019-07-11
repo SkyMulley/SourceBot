@@ -2,17 +2,13 @@ package club.thisisprettycool.OrdinalBot.Commands;
 
 import club.thisisprettycool.OrdinalBot.Main;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
-import com.vdurmont.emoji.Emoji;
-import com.vdurmont.emoji.EmojiManager;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.util.EmbedBuilder;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.concurrent.TimeUnit;
 
 public class Suggest extends CommandCore {
-    private static Emoji cross = EmojiManager.getForAlias("negative_squared_cross_mark");
-    private static Emoji tick = EmojiManager.getForAlias("white_check_mark");
     public Suggest() {
         commandName = "Suggest";
         helpMessage = "Suggest an change in the server!";
@@ -21,27 +17,25 @@ public class Suggest extends CommandCore {
     }
 
     @Override
-    public boolean executeCommand(MessageReceivedEvent event, String[] argsArray) {
+    public boolean executeCommand(MessageCreateEvent event, String[] argsArray, String content) {
         try {
             if (Main.getDbManager().getSuggestChannel() == 0) {
-                event.getChannel().sendMessage("A suggest channel hasn't been setup, please contact an Admin to have one done");
+                event.getMessage().getChannel().block().createMessage("A suggest channel hasn't been setup, please contact an Admin to have one done");
                 return false;
             }
             if (argsArray.length >= 2) {
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.withAuthorIcon(event.getAuthor().getAvatarURL());
-                builder.withAuthorName("Suggestion by "+event.getAuthor().getName());
-                builder.withDescription(event.getMessage().getContent().substring(argsArray[0].length()));
-                IMessage message = event.getGuild().getChannelByID(Main.getDbManager().getSuggestChannel()).sendMessage(builder.build());
-                message.addReaction(tick);
-                TimeUnit.SECONDS.sleep(1);
-                message.addReaction(cross);
-                event.getChannel().sendMessage("Thanks for the suggestion!");
-                Main.getDbManager().createSuggestion(event.getAuthor().getLongID(),event.getMessage().getContent().substring(argsArray[0].length()),message.getLongID());
+                Message message = event.getMessage().getChannel().block().createMessage(c ->c.setEmbed(embed -> {
+                    embed.setAuthor("Suggestion by "+event.getMember().get().getUsername(),event.getMember().get().getAvatarUrl(),event.getMember().get().getAvatarUrl());
+                    embed.setDescription(content.substring(argsArray[0].length()));
+                })).block();
+                message.addReaction(ReactionEmoji.unicode("white_check_mark"));
+                message.addReaction(ReactionEmoji.unicode("negative_squared_cross_mark"));
+                event.getMessage().getChannel().block().createMessage("Thanks for the suggestion!");
+                Main.getDbManager().createSuggestion(event.getMember().get().getId().asLong(),content.substring(argsArray[0].length()),message.getId().asLong());
                 return true;
             }
         }catch (Exception e) {
-            event.getChannel().sendMessage("Something went wrong, it could be that I don't have permissions to send inside the suggestion channel");
+            event.getMessage().getChannel().block().createMessage("Something went wrong, it could be that I don't have permissions to send inside the suggestion channel");
             return false;
         }
         return false;

@@ -2,9 +2,8 @@ package club.thisisprettycool.OrdinalBot.Commands;
 
 import club.thisisprettycool.OrdinalBot.Main;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
-import com.vdurmont.emoji.EmojiManager;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.handle.impl.obj.Guild;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -19,10 +18,10 @@ public class Query extends CommandCore {
     }
 
     @Override
-    public boolean executeCommand(MessageReceivedEvent event, String[] argArray) {
+    public boolean executeCommand(MessageCreateEvent event, String[] argArray, String content) {
         try {
-            ResultSet rs = Main.getDbManager().runQuery(event.getMessage().getContent().substring(5 + Main.getDbManager().getPrefix().length()));
-            event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+            ResultSet rs = Main.getDbManager().runQuery(content.substring(5 + Main.getDbManager().getPrefix().length()));
+            event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
             ResultSetMetaData rsmd = rs.getMetaData();
             int columnsNumber = rsmd.getColumnCount();
             String embed = "";
@@ -34,7 +33,7 @@ public class Query extends CommandCore {
                 }
                 embed = embed + "\n\n";
             }
-            event.getChannel().sendMessage("```"+embed+"```");
+            event.getMessage().getChannel().block().createMessage("```"+embed+"```");
             return true;
         }catch (Exception e) {
             return true;
