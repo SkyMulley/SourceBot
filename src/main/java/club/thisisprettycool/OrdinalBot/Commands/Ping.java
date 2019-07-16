@@ -17,11 +17,17 @@ public class Ping extends CommandCore {
 
     @Override
     public boolean executeCommand(MessageCreateEvent event, String[] argArray,String content) {
-        LocalDateTime sentTime = LocalDateTime.ofInstant(event.getMessage().getTimestamp(), ZoneId.systemDefault());
-        Message probe = event.getMessage().getChannel().block().createMessage("Waiting for reply..").block();
-        LocalDateTime repliedTime = LocalDateTime.ofInstant(probe.getTimestamp(), ZoneId.systemDefault());
-        long ping = Duration.between(sentTime,repliedTime).toMillis();
-        probe.edit(c -> String.format("Pong! %s (%d ms)",event.getMember().get().getMention(),ping));
-        return true;
+        try {
+            LocalDateTime sentTime = LocalDateTime.ofInstant(event.getMessage().getTimestamp(), ZoneId.systemDefault());
+            event.getMessage().getChannel().subscribe(d -> d.createMessage("Waiting for reply..").subscribe(c -> {
+                LocalDateTime repliedTime = LocalDateTime.ofInstant(c.getTimestamp(), ZoneId.systemDefault());
+                long ping = Duration.between(sentTime, repliedTime).toMillis();
+                c.edit(edit -> edit.setContent(String.format("Png! %s (%d ms)", event.getMember().get().getMention(), ping)));
+            }));
+            return true;
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

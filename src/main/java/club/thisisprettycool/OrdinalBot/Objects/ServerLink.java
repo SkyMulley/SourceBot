@@ -3,11 +3,8 @@ package club.thisisprettycool.OrdinalBot.Objects;
 import com.ibasco.agql.protocols.valve.source.query.client.SourceQueryClient;
 import com.ibasco.agql.protocols.valve.source.query.pojos.SourceServer;
 import discord4j.core.object.entity.Message;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.util.EmbedBuilder;
-import sx.blah.discord.util.RequestBuffer;
 
+import java.awt.*;
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
@@ -49,18 +46,18 @@ public class ServerLink {
 
     private void buildEmbed(SourceServer server) {
         try {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.withColor(0, 255, 0);
-            builder.withAuthorName("Server Status");
-            builder.appendField("Server is online!", "There are currently " + server.getNumOfPlayers() + " players online!", false);
-            builder.appendField("Server Map", "" + server.getMapName(), false);
-            builder.appendField("Connect Now!", "steam://connect/"+ip+":"+port, false);
-            try {
-                builder.withImage("https://image.gametracker.com/images/maps/160x120/garrysmod/" + server.getMapName() + ".jpg");
-            } catch (Exception e) {
-            }
-            builder.withFooterText("Last Refreshed at " + LocalDateTime.now());
-            channel.edit(builder.build());
+            channel.edit(c -> c.setEmbed(embed -> {
+                embed.setColor(Color.GREEN);
+                embed.setAuthor("Server Status",channel.getClient().getSelf().block().getAvatarUrl(),channel.getClient().getSelf().block().getAvatarUrl());
+                embed.addField("Server is online!", "There are currently " + server.getNumOfPlayers() + " players online!", false);
+                embed.addField("Server Map", "" + server.getMapName(), false);
+                embed.addField("Connect Now!", "steam://connect/"+ip+":"+port, false);
+                try {
+                    embed.setImage("https://image.gametracker.com/images/maps/160x120/garrysmod/" + server.getMapName() + ".jpg");
+                } catch (Exception e) {
+                }
+                embed.setFooter("Last Refreshed at " + LocalDateTime.now(), channel.getClient().getSelf().block().getAvatarUrl());
+            }));
         } catch (Exception e) {
             buildFailedEmbed();
             e.printStackTrace();
@@ -69,11 +66,11 @@ public class ServerLink {
 
 
     private void buildFailedEmbed() {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.withColor(255,0,0);
-        builder.withAuthorName("Server Status");
-        builder.appendField("Server is Offline","Check for the server failed, this could mean its offline or there's an issue with the Steam Servers",false);
-        builder.withFooterText("Last Refreshed at "+ LocalDateTime.now());
-        channel.edit(builder.build());
+        channel.edit(c -> c.setEmbed(embed -> {
+            embed.setColor(Color.RED);
+            embed.setAuthor("Server Status",channel.getClient().getSelf().block().getAvatarUrl(),channel.getClient().getSelf().block().getAvatarUrl());
+            embed.addField("Server is Offline","Check for the server failed, this could mean its offline or there's an issue with the Steam Servers",false);
+            embed.setFooter("Last Refreshed at " + LocalDateTime.now(), channel.getClient().getSelf().block().getAvatarUrl());
+        }));
     }
 }

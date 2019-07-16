@@ -19,12 +19,12 @@ public class DBManager {
                 c = DriverManager.getConnection("jdbc:sqlite:OrdinalBot.db");
                 stmt = c.createStatement();
                 stmt.execute("CREATE TABLE IF NOT EXISTS Suggestions (UserID bigint(20), Suggestion varchar(2000), SuggestionMessage varchar(20))");
-                stmt.execute("CREATE TABLE IF NOT EXISTS Settings (Prefix VARCHAR(5), ServerInfoChannel bigint(20), ServerInfoIP VARCHAR(20), SuggestChannel bigint(20), OptChannel bigint(20))");
+                stmt.execute("CREATE TABLE IF NOT EXISTS Settings (Prefix VARCHAR(5), ServerInfoChannel bigint(20), ServerInfoIP VARCHAR(20), SuggestChannel bigint(20), OptChannel bigint(20), OptMessage bigint(20), ServerInfoMessage bigint(20))");
                 stmt.execute("CREATE TABLE IF NOT EXISTS Tags (UserID bigint(20), Tag varchar(50))");
                 stmt.execute("CREATE TABLE IF NOT EXISTS Blacklisted (UserID bigint(20))");
                 stmt.execute("CREATE TABLE IF NOT EXISTS Roles (AdminRole bigint(20), EventRole bigint(20), GeneralRole bigint(20), DeveloperRole bigint(20), EventStaff bigint(20))");
                 System.out.println("Database does not exist, generating records");
-                stmt.execute("INSERT INTO Settings (Prefix,ServerInfoChannel,ServerInfoIP,SuggestChannel,OptChannel) VALUES ('?',0,'null',0,0)");
+                stmt.execute("INSERT INTO Settings (Prefix,ServerInfoChannel,ServerInfoIP,SuggestChannel,OptChannel, OptMessage, ServerInfoMessage) VALUES ('?',0,'null',0,0,0,0)");
                 stmt.execute("INSERT INTO Roles (AdminRole, EventRole, GeneralRole, DeveloperRole, EventStaff) VALUES (0,0,0,0,0)");
             }
             c = DriverManager.getConnection("jdbc:sqlite:OrdinalBot.db");
@@ -212,7 +212,7 @@ public class DBManager {
             stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM Settings");
             if(rs.next()) {
-                return rs.getLong("serverinfochannel");
+                return rs.getLong("serverinfomessage");
             }
             return 0;
         }catch (Exception e) {
@@ -223,6 +223,31 @@ public class DBManager {
     }
 
     public void setServerInfoMessage(long id) {
+        try {
+            stmt = c.createStatement();
+            stmt.execute("UPDATE Settings SET ServerInfoMessage = "+id);
+        } catch (Exception e) {
+            System.out.println("Something has gone wrong");
+            e.printStackTrace();
+        }
+    }
+
+    public long getServerInfoChannel() {
+        try {
+            stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Settings");
+            if(rs.next()) {
+                return rs.getLong("serverinfochannel");
+            }
+            return 0;
+        }catch (Exception e) {
+            System.out.println("Something has gone wrong");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public void setServerInfoChannel(long id) {
         try {
             stmt = c.createStatement();
             stmt.execute("UPDATE Settings SET ServerInfoChannel = "+id);
@@ -237,7 +262,7 @@ public class DBManager {
             stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM Settings");
             if(rs.next()) {
-                return rs.getLong("OptChannel");
+                return rs.getLong("OptMessage");
             }
             return 0;
         }catch (Exception e) {
@@ -248,6 +273,31 @@ public class DBManager {
     }
 
     public void setOptMessage(long id) {
+        try {
+            stmt = c.createStatement();
+            stmt.execute("UPDATE Settings SET OptChannel = "+id+" WHERE OptMessage = "+getServerInfoMessage());
+        } catch (Exception e) {
+            System.out.println("Something has gone wrong");
+            e.printStackTrace();
+        }
+    }
+
+    public long getOptChannel() {
+        try {
+            stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Settings");
+            if(rs.next()) {
+                return rs.getLong("OptChannel");
+            }
+            return 0;
+        }catch (Exception e) {
+            System.out.println("Something has gone wrong");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public void setOptChannel(long id) {
         try {
             stmt = c.createStatement();
             stmt.execute("UPDATE Settings SET OptChannel = "+id+" WHERE OptChannel = "+getServerInfoMessage());

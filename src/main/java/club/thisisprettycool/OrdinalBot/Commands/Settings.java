@@ -3,6 +3,9 @@ package club.thisisprettycool.OrdinalBot.Commands;
 import club.thisisprettycool.OrdinalBot.Main;
 import club.thisisprettycool.OrdinalBot.Objects.CommandCore;
 import club.thisisprettycool.OrdinalBot.Objects.ServerLink;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.util.Snowflake;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,24 +19,24 @@ public class Settings extends CommandCore {
     }
 
     @Override
-    public boolean executeCommand(MessageReceivedEvent event, String[] argsArray) {
+    public boolean executeCommand(MessageCreateEvent event, String[] argsArray, String content) {
         if(argsArray.length==1) {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.withAuthorName("Bot Settings");
-            builder.withFooterText("Called by "+event.getAuthor().getName());
-            builder.appendField("Admin Role",""+event.getGuild().getRoleByID(Main.getDbManager().getAdminRole()),true);
-            builder.appendField("Event Role",""+event.getGuild().getRoleByID(Main.getDbManager().getEventRole()),true);
-            builder.appendField("General Role",""+event.getGuild().getRoleByID(Main.getDbManager().getGeneralRole()),true);
-            builder.appendField("Update Role",""+event.getGuild().getRoleByID(Main.getDbManager().getDevelopRole()),true);
-            builder.appendField("Event Staff Role",""+event.getGuild().getRoleByID(Main.getDbManager().getEventStaffRole()  ),true);
-            event.getChannel().sendMessage(builder.build());
+            event.getMessage().getChannel().block().createMessage(c -> c.setEmbed(embed -> {
+                embed.setAuthor("Bot Settings",event.getClient().getSelf().block().getAvatarUrl(),event.getClient().getSelf().block().getAvatarUrl());
+                embed.setFooter("Called by "+event.getMember().get().getNickname().get(),event.getMember().get().getAvatarUrl());
+                embed.addField("Admin Role",""+event.getGuild().block().getRoleById(Snowflake.of(Main.getDbManager().getAdminRole())),true);
+                embed.addField("Event Role",""+event.getGuild().block().getRoleById(Snowflake.of(Main.getDbManager().getEventRole())),true);
+                embed.addField("General Role",""+event.getGuild().block().getRoleById(Snowflake.of(Main.getDbManager().getGeneralRole())),true);
+                embed.addField("Update Role",""+event.getGuild().block().getRoleById(Snowflake.of(Main.getDbManager().getDevelopRole())),true);
+                embed.addField("Event Staff Role",""+event.getGuild().block().getRoleById(Snowflake.of(Main.getDbManager().getEventStaffRole())),true);
+            }));
             return true;
         }
         if(argsArray.length>=2) {
             if(argsArray.length==2) {
                 if(argsArray[1].equalsIgnoreCase("setsuggestionchannel")) {
-                    Main.getDbManager().setSuggestChannel(event.getChannel().getLongID());
-                    event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                    Main.getDbManager().setSuggestChannel(event.getMessage().getChannel().block().getId().asLong());
+                    event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                     return true;
                 }
                 if(argsArray[1].equalsIgnoreCase("setserverinfochannel")) {
@@ -41,7 +44,7 @@ public class Settings extends CommandCore {
                         notEnoughShit(event);
                         return false;
                     }
-                    event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                    event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                     setupServerInfo(event);
                     return true;
                 }
@@ -50,7 +53,7 @@ public class Settings extends CommandCore {
                         notEnoughShit(event);
                         return false;
                     }
-                    event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                    event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                     setupOptChannel(event);
                     return true;
                 }
@@ -58,18 +61,18 @@ public class Settings extends CommandCore {
             if(argsArray.length==3) {
                 if(argsArray[1].equalsIgnoreCase("setprefix")) {
                     Main.getDbManager().setPrefix(argsArray[2]);
-                    event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                    event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                     return true;
                 }
                 if(argsArray[1].equalsIgnoreCase("setip")) {
                     Main.getDbManager().setIP(argsArray[2]);
-                    event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                    event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                     return true;
                 }
                 if(argsArray[1].equalsIgnoreCase("setadminrole")) {
                     try {
                         Main.getDbManager().setAdminRole(Long.parseLong(getOnlyDigits(argsArray[2])));
-                        event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                        event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                         return true;
                     }catch (Exception e) {
                         wrongShit(event);
@@ -79,7 +82,7 @@ public class Settings extends CommandCore {
                 if(argsArray[1].equalsIgnoreCase("seteventrole")) {
                     try {
                         Main.getDbManager().setEventRole(Long.parseLong(getOnlyDigits(argsArray[2])));
-                        event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                        event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                         return true;
                     }catch (Exception e) {
                         wrongShit(event);
@@ -89,7 +92,7 @@ public class Settings extends CommandCore {
                 if(argsArray[1].equalsIgnoreCase("setgeneralrole")) {
                     try {
                         Main.getDbManager().setGeneralRole(Long.parseLong(getOnlyDigits(argsArray[2])));
-                        event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                        event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                         return true;
                     }catch (Exception e) {
                         wrongShit(event);
@@ -99,7 +102,7 @@ public class Settings extends CommandCore {
                 if(argsArray[1].equalsIgnoreCase("setdeveloprole")) {
                     try {
                         Main.getDbManager().setDevelopRole(Long.parseLong(getOnlyDigits(argsArray[2])));
-                        event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                        event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                         return true;
                     }catch (Exception e) {
                         wrongShit(event);
@@ -109,7 +112,7 @@ public class Settings extends CommandCore {
                 if(argsArray[1].equalsIgnoreCase("seteventstaffrole")) {
                     try {
                         Main.getDbManager().setEventStaffRole(Long.parseLong(getOnlyDigits(argsArray[2])));
-                        event.getMessage().addReaction(EmojiManager.getForAlias("ok"));
+                        event.getMessage().addReaction(ReactionEmoji.unicode("ok"));
                         return true;
                     }catch (Exception e) {
                         e.printStackTrace();
@@ -126,39 +129,38 @@ public class Settings extends CommandCore {
         }
     }
 
-    private void setupServerInfo(MessageReceivedEvent event) {
+    private void setupServerInfo(MessageCreateEvent event) {
         try {
             if (Main.getDbManager().getServerInfoMessage() != 0L) {
-                event.getGuild().getMessageByID(Main.getDbManager().getServerInfoMessage()).delete();
+                event.getClient().getMessageById(Snowflake.of(Main.getDbManager().getServerInfoChannel()),Snowflake.of(Main.getDbManager().getServerInfoMessage())).block().delete();
             }
-            Main.getDbManager().setServerInfoMessage(event.getChannel().sendMessage("Setting up server info...").getLongID());
+            Main.getDbManager().setServerInfoChannel(event.getMessage().getChannel().block().getId().asLong());
+            Main.getDbManager().setServerInfoMessage(event.getMessage().getChannel().block().createMessage("Setting up server info...").block().getId().asLong());
             String[] array = Main.getDbManager().getIP().split(":");
-            new ServerLink(event.getGuild().getMessageByID(Main.getDbManager().getServerInfoMessage()), array[0], Integer.parseInt(array[1]));
+            new ServerLink(event.getClient().getMessageById(Snowflake.of(Main.getDbManager().getServerInfoChannel()),Snowflake.of(Main.getDbManager().getServerInfoMessage())).block(),array[0], Integer.parseInt(array[1]));
         }catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void setupOptChannel(MessageReceivedEvent event) {
+    private void setupOptChannel(MessageCreateEvent event) {
 
     }
 
-    private void wrongShit(MessageReceivedEvent event) {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.withColor(255,0,0);
-        builder.withAuthorName("You've not entered the right stuff here");
-        builder.withDescription("You probably don't know what you're doing then");
-        builder.withFooterText("Ran by "+event.getAuthor().getName());
-        event.getChannel().sendMessage(builder.build());
+    private void wrongShit(MessageCreateEvent event) {
+        event.getMessage().getChannel().block().createMessage(c -> c.setEmbed(embed -> {
+            embed.setAuthor("You have not entered the right stuff here",event.getMember().get().getAvatarUrl(),event.getMember().get().getAvatarUrl());
+            embed.setFooter("Called by "+event.getMember().get().getNickname().get(),event.getMember().get().getAvatarUrl());
+            embed.setDescription("You probably don't know what you're doing then");
+        }));
     }
 
-    private void notEnoughShit(MessageReceivedEvent event) {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.withColor(255,0,0);
-        builder.withAuthorName("You've not entered the right stuff yet");
-        builder.withDescription("You're missing a few variables here and there");
-        builder.withFooterText("Ran by "+event.getAuthor().getName());
-        event.getChannel().sendMessage(builder.build());
+    private void notEnoughShit(MessageCreateEvent event) {
+        event.getMessage().getChannel().block().createMessage(c -> c.setEmbed(embed -> {
+            embed.setAuthor("You don't have enough stuff yet",event.getMember().get().getAvatarUrl(),event.getMember().get().getAvatarUrl());
+            embed.setFooter("Called by "+event.getMember().get().getNickname().get(),event.getMember().get().getAvatarUrl());
+            embed.setDescription("You'll need to enter variables in places");
+        }));
     }
 
     private static String getOnlyDigits(String s) {

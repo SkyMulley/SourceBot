@@ -20,33 +20,37 @@ public class MessageListener {
     }
 
     public void onMessageRecieved(MessageCreateEvent event) {
-        if(!event.getGuildId().isPresent() || !event.getMember().get().isBot()) {
-            if(!Main.getDbManager().isBlacklisted(event.getMember().get().getId().asLong())) {
-                String prefix = Main.getDbManager().getPrefix();
-                String content = event.getMessage().getContent().get();
-                if(content.equals("<@"+event.getClient().getSelf().block().getId()+">")) {
-                    event.getMessage().getChannel().block().createMessage("Hey There!\nMy prefix is `"+prefix+"`, use `"+prefix+"`help for commands and their usages");
-                    return;
-                }
-                String[] argArray = content.split(" ");
-                if (argArray.length == 0 || !argArray[0].startsWith(prefix)) {
-                    return;
-                }
-                String commandStr = argArray[0].substring(prefix.length());
-                for(CommandCore command :commandList) {
-                    if(commandStr.toLowerCase().contains(command.getCommandName().toLowerCase()) || command.isAlias(commandStr.toLowerCase())) {
-                        if(command.isAdminOnly()) {
-                            if(!event.getMember().get().getRoleIds().equals(Main.getDbManager().getAdminRole())) {
-                                if(!event.getMember().get().equals(event.getClient().getApplicationInfo().block().getOwner().block())) {
-                                    return;
+        try {
+            if (!event.getGuildId().isPresent() || !event.getMember().get().isBot()) {
+                if (!Main.getDbManager().isBlacklisted(event.getMember().get().getId().asLong())) {
+                    String prefix = Main.getDbManager().getPrefix();
+                    String content = event.getMessage().getContent().get();
+                    if (content.equals("<@" + event.getClient().getSelf().block().getId() + ">")) {
+                        event.getMessage().getChannel().block().createMessage("Hey There!\nMy prefix is `" + prefix + "`, use `" + prefix + "`help for commands and their usages");
+                        return;
+                    }
+                    String[] argArray = content.split(" ");
+                    if (argArray.length == 0 || !argArray[0].startsWith(prefix)) {
+                        return;
+                    }
+                    String commandStr = argArray[0].substring(prefix.length());
+                    for (CommandCore command : commandList) {
+                        if (commandStr.toLowerCase().contains(command.getCommandName().toLowerCase()) || command.isAlias(commandStr.toLowerCase())) {
+                            if (command.isAdminOnly()) {
+                                if (!event.getMember().get().getRoleIds().equals(Main.getDbManager().getAdminRole())) {
+                                    if (!event.getMember().get().equals(event.getClient().getApplicationInfo().block().getOwner().block())) {
+                                        return;
+                                    }
                                 }
                             }
+                            System.out.println(event.getMember().get().getUsername() + " ran command " + commandStr + "\nFull message: " + event.getMessage().getContent());
+                            command.executeCommand(event, argArray, content);
                         }
-                        System.out.println(event.getMember().get().getUsername() +" ran command "+commandStr+"\nFull message: "+event.getMessage().getContent());
-                        command.executeCommand(event,argArray,content);
                     }
                 }
             }
+        }catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
