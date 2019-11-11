@@ -12,7 +12,7 @@ public class Main {
         try {
             Thread.sleep(2000);
         }catch (Exception e) {}
-        cli = new DiscordClientBuilder("NTMwNzY4ODQ5NTk1NzkzNDE5.XSecQg.eM8oKfzzmaBEckaknV2ZJLbc2ms").build();
+        cli = new DiscordClientBuilder("*bot token removed*").build();
         cli.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> System.out.println("OrdinalBot online! Running as "+event.getSelf().getUsername()));
         new MessageListener(cli);
         cli.login().block();
